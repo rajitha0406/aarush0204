@@ -22,10 +22,13 @@ input{cursor:text}
 </style></head><body><main>
 <h1>Ashoka Flexible Planner</h1>
 <p class="sub">Tell it your hours each day. It picks tasks by priority: urgent school deadlines you enter, then Ashoka, then CLAT last.</p>
+<div class="tm" id="sync" aria-live="polite">Connecting...</div>
 <nav><button data-t="today" class="on">Today</button><button data-t="soon">Coming</button><button data-t="dl">Deadlines</button><button data-t="miss">Missed <span id="mc"></span></button><button data-t="set">Setup</button></nav>
 <div id="al"></div>
 <section id="today"></section><section id="soon" class="hide"></section><section id="dl" class="hide"></section><section id="miss" class="hide"></section><section id="set" class="hide"></section>
 </main>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 const W=[{"n": 1, "start": "2026-10-19", "phase": "1 Foundation", "focus": "Learn the format, find your baseline", "tasks": ["Read official AAA format + Sample 1 and 2; solve 1 untimed", "Take 1 diagnostic section untimed; note weak topics", "Read 2 long-form opinion pieces; write 1 untimed OSE", "Brainstorm 3 personal stories/themes (list only)", "Skim CLAT pattern, no practice"]}, {"n": 2, "start": "2026-10-26", "phase": "1 Foundation", "focus": "Core maths and basic logic", "tasks": ["Percentages, ratios, averages: 25 Qs", "Syllogisms and deductions: 20 Qs", "1 OSE, 30 min timed", "Pick main theme; write outline", "2 RC passages (optional)"]}, {"n": 3, "start": "2026-11-02", "phase": "1 Foundation", "focus": "Data and arguments", "tasks": ["Data interpretation: 2 sets", "Assumptions, strengthen/weaken: 20 Qs", "1 OSE, 30 min timed", "Write Draft 1 (messy is fine)", "Weekly current-affairs skim (15 min)"]}, {"n": 4, "start": "2026-11-09", "phase": "1 Foundation", "focus": "Decide your round", "tasks": ["Number series, probability basics: 25 Qs", "Flaws in reasoning: 20 Qs", "1 OSE, then self-review", "Finish Draft 1; DECIDE Round 1 vs 2 by 10 Nov", "2 RC passages (optional)"]}, {"n": 5, "start": "2026-11-16", "phase": "2 Build", "focus": "Build speed", "tasks": ["Timed maths section (25 min)", "Timed logic section (25 min)", "1 OSE, timed + review", "Draft 2: cut and sharpen; get 1 reader\u2019s feedback", "Optional: 1 short legal-reasoning set"]}, {"n": 6, "start": "2026-11-23", "phase": "2 Build", "focus": "Round 1 deadline week (23 Nov)", "tasks": ["Mixed practice: 25 Qs", "Mixed practice: 25 Qs", "1 OSE", "If applying Round 1: SUBMIT form by 21 Nov. Else: Draft 2 polish", "Skip CLAT if busy"]}, {"n": 7, "start": "2026-11-30", "phase": "2 Build", "focus": "Revision; protect school work", "tasks": ["Error-log review + 15 Qs", "Error-log review + 15 Qs", "1 OSE", "Ask a teacher to read essay", "Optional: 1 RC"]}, {"n": 8, "start": "2026-12-07", "phase": "2 Build", "focus": "Full mock 1", "tasks": ["FULL AAA mock 1 (90 min)", "Analyse every wrong answer in Error Log", "1 OSE (Round 1 assessment is around early Dec, verify date)", "Draft 3", "Optional: GK skim"]}, {"n": 9, "start": "2026-12-14", "phase": "2 Build", "focus": "Fix weak topics", "tasks": ["Drill your 2 weakest maths topics", "Drill your weakest logic type", "1 OSE on a new theme", "Draft 3 polish", "Optional: 2 RC"]}, {"n": 10, "start": "2026-12-21", "phase": "3 Application", "focus": "Application form + mock 2", "tasks": ["FULL AAA mock 2", "Review mock 2 errors", "1 OSE", "Essay FINAL version; fill Ashoka form sections (head boy, activities)", "Optional only"]}, {"n": 11, "start": "2026-12-28", "phase": "3 Application", "focus": "Mock 3 + OSE timing", "tasks": ["Timed maths sets", "FULL AAA mock 3", "2 OSEs (timed, self-score)", "Proofread essay; check recommendations/documents", "Optional only"]}, {"n": 12, "start": "2027-01-04", "phase": "3 Application", "focus": "Form review", "tasks": ["Mixed drills 30 Qs", "Mixed drills 30 Qs", "1 OSE", "Final read of whole form", "Optional only"]}, {"n": 13, "start": "2027-01-11", "phase": "3 Application", "focus": "SUBMIT the form", "tasks": ["Full mock 4", "Review errors", "1 OSE", "SUBMIT Round 2 application by 13 Jan (buffer)", "-"]}, {"n": 14, "start": "2027-01-18", "phase": "4 Final sprint", "focus": "Deadline week (20 Jan)", "tasks": ["Light timed section", "Light timed section", "1 OSE", "Confirm application shows as submitted", "-"]}, {"n": 15, "start": "2027-01-25", "phase": "4 Final sprint", "focus": "Final sprint, assessment 31 Jan", "tasks": ["Full mock 5 (early week), then rest", "Revise error log only", "2 OSEs, then 1 easy one", "Admit card, centre, ID, travel plan", "-"]}];const START=new Date(2026,9,19),K="ashoka_flex_v1";
 const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -42,7 +45,41 @@ let S={h:{},ld:{},drop:{},skip:{},pin:{},st:"17:30",defH:2,win:14,first:TODAY,dl
 {id:"p3",type:"ashoka",title:"Ashoka Round 2 form deadline",date:"2027-01-20",hrs:0},
 {id:"p4",type:"ashoka",title:"Ashoka Round 2 assessment (OSE + AAA)",date:"2027-01-31",hrs:0}]};
 try{Object.assign(S,JSON.parse(localStorage.getItem(K)||"{}"))}catch(e){}
-const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+/* ---- live sync: Firebase Realtime Database, path "ashoka_planner" ---- */
+const FBC={
+  apiKey:"AIzaSyADMAU6xMnZ5Uap8etHw8f2zI_-TUzkYtc",
+  authDomain:"jee-track-3de0f.firebaseapp.com",
+  databaseURL:"https://jee-track-3de0f-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"jee-track-3de0f",
+  storageBucket:"jee-track-3de0f.firebasestorage.app",
+  messagingSenderId:"916834454032",
+  appId:"1:916834454032:web:7be735e17ee1053aef5895"
+};
+let ref=null,ready=false,pendingRender=false;const sent={};
+const SEC=["h","ld","drop","skip","pin","dl","cfg"];
+const secVal=k=>JSON.stringify(k==="cfg"?{st:S.st,defH:S.defH,win:S.win,first:S.first}:S[k]);
+const setSync=t=>{const e=document.getElementById("sync");if(e)e.textContent=t};
+const cache=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const pushAll=()=>{if(!ref||!ready)return;SEC.forEach(k=>{const v=secVal(k);if(sent[k]!==v){sent[k]=v;ref.child(k).set(v).catch(()=>setSync("Sync failed, saved on this device only"))}})};
+const save=()=>{cache();pushAll()};
+function applyRemote(v){let ch=false;
+  SEC.forEach(k=>{const r=v[k];if(typeof r!=="string")return;
+    if(r!==secVal(k)){try{const o=JSON.parse(r);if(k==="cfg")Object.assign(S,o);else S[k]=o;ch=true}catch(e){return}}
+    sent[k]=secVal(k)});
+  if(ch){cache();const a=document.activeElement;
+    if(a&&/^(INPUT|SELECT)$/.test(a.tagName)&&a.type!=="checkbox")pendingRender=true;else render()}}
+document.addEventListener("focusout",()=>{if(pendingRender){pendingRender=false;setTimeout(render,50)}});
+(function initSync(){
+  if(typeof firebase==="undefined"){setSync("Can't load Firebase. Saved on this device only");return}
+  try{
+    firebase.initializeApp(FBC);const db=firebase.database();ref=db.ref("ashoka_planner");
+    let con=false;setSync("Connecting...");
+    setTimeout(()=>{if(!con)setSync("Can't reach the database. Check the config and that the Realtime Database exists")},8000);
+    db.ref(".info/connected").on("value",x=>{con=x.val()===true;if(con)setSync("Live: synced");else if(ready)setSync("Reconnecting...")});
+    ref.on("value",snap=>{applyRemote(snap.val()||{});ready=true;pushAll()},
+      err=>setSync("Database refused access: check the Rules tab ("+(err&&err.code||"error")+")"));
+  }catch(e){setSync("Sync error: "+(e&&e.message||e))}
+})();
 const TYPES={exam:["School exam",6],project:["Project",5],viva:["Viva",3],assign:["Assignment",2],other:["Other school work",2],ashoka:["Ashoka / personal date (no prep)",0]};
 const TXT={exam:"Revise topics, solve past papers, make short notes.",project:"Work on the project: research, drafting or making.",viva:"Practise answers aloud and revise key concepts.",assign:"Work on the assignment.",other:"Work on this."};
 /* ---- tasks ---- */
@@ -129,7 +166,7 @@ if(d.pin){(S.pin[TODAY]=S.pin[TODAY]||[]).push(d.pin);save();tab="today";render(
 if(d.dr){S.drop[d.dr]=1;save();render()}
 if(d.rd){S.dl=S.dl.filter(x=>x.id!=d.rd);save();render()}
 if(t.id=="da"){const ty=$("#dt").value;S.dl.push({id:"d"+Date.now(),type:ty,title:$("#dn").value||TYPES[ty][0],date:$("#dd").value||"",hrs:ty=="ashoka"?0:+$("#dh").value||0});save();render()}
-if(t.id=="rs"&&confirm("Delete all progress and dates?")){localStorage.removeItem(K);location.reload()}});
+if(t.id=="rs"&&confirm("Delete all progress and dates on ALL devices?")){localStorage.removeItem(K);ready=false;(ref?ref.remove():Promise.resolve()).catch(()=>{}).then(()=>location.reload())}});
 document.addEventListener("change",e=>{const t=e.target,d=t.dataset;
 if(d.tick){const [id,m]=d.tick.split("|");(S.ld[TODAY]=S.ld[TODAY]||{})[id]=(S.ld[TODAY][id]||0)+ +m;save();render()}
 if(d.un){delete S.ld[TODAY][d.un];save();render()}
