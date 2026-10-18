@@ -1,0 +1,142 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ashoka Flexible Planner</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#1b2333;--mut:#5d6a82;--ac:#1f3a5f;--bd:#dde2ee;--sc:#2563b0;--as:#c8553d;--cl:#7a7f8c;--ok:#2e8b57;--rd:#c0392b;--am:#d4a017}
+@media (prefers-color-scheme:dark){:root{--bg:#10141d;--card:#1a2130;--tx:#e8ecf5;--mut:#9aa6bf;--ac:#7fa8e0;--bd:#2a3347;--sc:#7fa8e0;--as:#f08a72;--cl:#9aa6bf;--ok:#5cc58a;--rd:#ff7b6b;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:800px;margin:0 auto;padding:14px}h1{font-size:1.35rem;margin:.2em 0}h2{font-size:1.05rem;margin:1.1em 0 .4em}
+.sub,.tm{color:var(--mut);font-size:.85rem}
+nav{display:flex;gap:5px;margin:8px 0;position:sticky;top:0;background:var(--bg);padding:6px 0;z-index:5}nav button{flex:1;padding:7px 2px;font-size:.85rem}nav button.on{background:var(--ac);color:var(--bg)}
+button,input,select{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:7px 10px;cursor:pointer}
+input{cursor:text}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin:8px 0}
+.ask{border:2px solid var(--as)}.hrs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.hrs button.on{background:var(--as);color:#fff;border-color:var(--as)}
+.al{border-left:5px solid var(--am);background:var(--card);padding:9px 12px;border-radius:8px;margin:8px 0;font-size:.9rem}.al.red{border-color:var(--rd)}
+.b{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--bd)}.b input{width:19px;height:19px;margin-top:3px;flex:none}.b .in{flex:1;min-width:0}.b.dn .t{text-decoration:line-through;opacity:.5}
+.tag{font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:9px;color:#fff;margin-right:6px}.school{background:var(--sc)}.ashoka{background:var(--as)}.clat{background:var(--cl)}
+.x{background:none;border:0;color:var(--mut);font-size:.78rem;text-decoration:underline;padding:2px 6px 2px 0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}.row input[type=text]{flex:1;min-width:140px}
+.bar{height:8px;background:var(--bd);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok)}
+.hide{display:none}
+</style></head><body><main>
+<h1>Ashoka Flexible Planner</h1>
+<p class="sub">Tell it your hours each day. It picks tasks by priority: urgent school deadlines you enter, then Ashoka, then CLAT last.</p>
+<nav><button data-t="today" class="on">Today</button><button data-t="soon">Coming</button><button data-t="dl">Deadlines</button><button data-t="miss">Missed <span id="mc"></span></button><button data-t="set">Setup</button></nav>
+<div id="al"></div>
+<section id="today"></section><section id="soon" class="hide"></section><section id="dl" class="hide"></section><section id="miss" class="hide"></section><section id="set" class="hide"></section>
+</main>
+<script>
+const W=[{"n": 1, "start": "2026-10-19", "phase": "1 Foundation", "focus": "Learn the format, find your baseline", "tasks": ["Read official AAA format + Sample 1 and 2; solve 1 untimed", "Take 1 diagnostic section untimed; note weak topics", "Read 2 long-form opinion pieces; write 1 untimed OSE", "Brainstorm 3 personal stories/themes (list only)", "Skim CLAT pattern, no practice"]}, {"n": 2, "start": "2026-10-26", "phase": "1 Foundation", "focus": "Core maths and basic logic", "tasks": ["Percentages, ratios, averages: 25 Qs", "Syllogisms and deductions: 20 Qs", "1 OSE, 30 min timed", "Pick main theme; write outline", "2 RC passages (optional)"]}, {"n": 3, "start": "2026-11-02", "phase": "1 Foundation", "focus": "Data and arguments", "tasks": ["Data interpretation: 2 sets", "Assumptions, strengthen/weaken: 20 Qs", "1 OSE, 30 min timed", "Write Draft 1 (messy is fine)", "Weekly current-affairs skim (15 min)"]}, {"n": 4, "start": "2026-11-09", "phase": "1 Foundation", "focus": "Decide your round", "tasks": ["Number series, probability basics: 25 Qs", "Flaws in reasoning: 20 Qs", "1 OSE, then self-review", "Finish Draft 1; DECIDE Round 1 vs 2 by 10 Nov", "2 RC passages (optional)"]}, {"n": 5, "start": "2026-11-16", "phase": "2 Build", "focus": "Build speed", "tasks": ["Timed maths section (25 min)", "Timed logic section (25 min)", "1 OSE, timed + review", "Draft 2: cut and sharpen; get 1 reader\u2019s feedback", "Optional: 1 short legal-reasoning set"]}, {"n": 6, "start": "2026-11-23", "phase": "2 Build", "focus": "Round 1 deadline week (23 Nov)", "tasks": ["Mixed practice: 25 Qs", "Mixed practice: 25 Qs", "1 OSE", "If applying Round 1: SUBMIT form by 21 Nov. Else: Draft 2 polish", "Skip CLAT if busy"]}, {"n": 7, "start": "2026-11-30", "phase": "2 Build", "focus": "Revision; protect school work", "tasks": ["Error-log review + 15 Qs", "Error-log review + 15 Qs", "1 OSE", "Ask a teacher to read essay", "Optional: 1 RC"]}, {"n": 8, "start": "2026-12-07", "phase": "2 Build", "focus": "Full mock 1", "tasks": ["FULL AAA mock 1 (90 min)", "Analyse every wrong answer in Error Log", "1 OSE (Round 1 assessment is around early Dec, verify date)", "Draft 3", "Optional: GK skim"]}, {"n": 9, "start": "2026-12-14", "phase": "2 Build", "focus": "Fix weak topics", "tasks": ["Drill your 2 weakest maths topics", "Drill your weakest logic type", "1 OSE on a new theme", "Draft 3 polish", "Optional: 2 RC"]}, {"n": 10, "start": "2026-12-21", "phase": "3 Application", "focus": "Application form + mock 2", "tasks": ["FULL AAA mock 2", "Review mock 2 errors", "1 OSE", "Essay FINAL version; fill Ashoka form sections (head boy, activities)", "Optional only"]}, {"n": 11, "start": "2026-12-28", "phase": "3 Application", "focus": "Mock 3 + OSE timing", "tasks": ["Timed maths sets", "FULL AAA mock 3", "2 OSEs (timed, self-score)", "Proofread essay; check recommendations/documents", "Optional only"]}, {"n": 12, "start": "2027-01-04", "phase": "3 Application", "focus": "Form review", "tasks": ["Mixed drills 30 Qs", "Mixed drills 30 Qs", "1 OSE", "Final read of whole form", "Optional only"]}, {"n": 13, "start": "2027-01-11", "phase": "3 Application", "focus": "SUBMIT the form", "tasks": ["Full mock 4", "Review errors", "1 OSE", "SUBMIT Round 2 application by 13 Jan (buffer)", "-"]}, {"n": 14, "start": "2027-01-18", "phase": "4 Final sprint", "focus": "Deadline week (20 Jan)", "tasks": ["Light timed section", "Light timed section", "1 OSE", "Confirm application shows as submitted", "-"]}, {"n": 15, "start": "2027-01-25", "phase": "4 Final sprint", "focus": "Final sprint, assessment 31 Jan", "tasks": ["Full mock 5 (early week), then rest", "Revise error log only", "2 OSEs, then 1 easy one", "Admit card, centre, ID, travel plan", "-"]}];const START=new Date(2026,9,19),K="ashoka_flex_v1";
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const addD=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const TODAY=iso(new Date()),DN=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const D=s=>new Date(s+"T00:00:00"),diff=(a,b)=>Math.round((D(a)-D(b))/864e5);
+const fd=s=>{const d=D(s);return DN[(d.getDay()+6)%7]+" "+d.getDate()+" "+d.toLocaleString("en-IN",{month:"short"})};
+const hm=m=>String(Math.floor(m/60)%24).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+const hh=m=>(Math.round(m/6)/10)+" h";
+const $=s=>document.querySelector(s);
+let S={h:{},ld:{},drop:{},skip:{},pin:{},st:"17:30",defH:2,win:14,first:TODAY,dl:[
+{id:"p1",type:"ashoka",title:"Ashoka Round 1 form deadline (only if applying R1)",date:"2026-11-23",hrs:0},
+{id:"p2",type:"ashoka",title:"My target: submit Ashoka Round 2 form",date:"2027-01-13",hrs:0},
+{id:"p3",type:"ashoka",title:"Ashoka Round 2 form deadline",date:"2027-01-20",hrs:0},
+{id:"p4",type:"ashoka",title:"Ashoka Round 2 assessment (OSE + AAA)",date:"2027-01-31",hrs:0}]};
+try{Object.assign(S,JSON.parse(localStorage.getItem(K)||"{}"))}catch(e){}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const TYPES={exam:["School exam",6],project:["Project",5],viva:["Viva",3],assign:["Assignment",2],other:["Other school work",2],ashoka:["Ashoka / personal date (no prep)",0]};
+const TXT={exam:"Revise topics, solve past papers, make short notes.",project:"Work on the project: research, drafting or making.",viva:"Practise answers aloud and revise key concepts.",assign:"Work on the assignment.",other:"Work on this."};
+/* ---- tasks ---- */
+function ashokaTasks(){const o=[];W.forEach(w=>{const ws=iso(addD(START,(w.n-1)*7)),due=iso(addD(START,(w.n-1)*7+6)),T=w.tasks,mock=[8,10,11,13,15].includes(w.n);
+const A=(k,cat,title,mins,text)=>{if(text&&text!=="-")o.push({id:"a"+w.n+k,cat,title,mins,text,ws,due,w:w.n})};
+A("m1","ashoka","Maths",45,T[0]);A("l1","ashoka","Logic / critical thinking",45,T[1]);A("o1","ashoka","OSE",45,T[2]);A("e1","ashoka","Personal essay / form",40,T[3]);
+A("m2","ashoka","Maths, continued",40,"Continue this week’s topic: "+T[0]);A("l2","ashoka","Logic, continued",40,"Continue this week’s topic: "+T[1]);
+if(mock)A("mk","ashoka","FULL AAA mock",90,"40 Qs, 90 min, strict timing. Log the score in your spreadsheet.");
+A("er","ashoka","Error-log review",25,"Redo this week’s wrong answers without looking at solutions.");
+A("c1","clat","CLAT-lite (optional)",30,T[4])});return o}
+const AT=ashokaTasks();let SP={};
+function calcSP(){SP={};Object.values(S.ld).forEach(m=>Object.entries(m).forEach(([k,v])=>SP[k]=(SP[k]||0)+v))}
+const worked=d=>Object.values(S.ld[d]||{}).reduce((a,b)=>a+b,0);
+function pool(date){const o=[];
+AT.forEach(t=>{if(S.drop[t.id])return;const rem=t.mins-(SP[t.id]||0);if(rem<=0)return;let sc;
+if(t.cat=="clat"){if(!(t.ws<=date&&date<=t.due))return;sc=10}
+else{if(t.ws>iso(addD(D(date),7)))return;const od=diff(date,t.due),dd=-od;sc=170+12*Math.max(0,od)+(dd>=0&&dd<=2?40:0)-(t.ws>date?25:0)-o.length*0.01}
+o.push({...t,rem,sc,why:t.cat=="clat"?"Optional. Only here because you have spare time.":(diff(date,t.due)>0?"Ashoka Week "+t.w+" task, overdue by "+diff(date,t.due)+" day(s)":"Ashoka Week "+t.w+" plan, due "+fd(t.due))})});
+S.dl.forEach(d=>{if(!(d.hrs>0)||d.type=="ashoka"||d.done)return;const und=!d.date,dd=und?null:diff(d.date,date);if(!und&&(dd<0||dd>S.win))return;
+const n=Math.ceil(d.hrs*60/45),ch=[];let all=0;
+for(let i=0;i<n;i++){const m=i<n-1?45:Math.round(d.hrs*60-45*(n-1)),id=d.id+"#"+i,rem=m-(SP[id]||0);if(rem>0){ch.push({id,m,rem,i});all+=rem}}
+ch.forEach(c=>o.push({id:c.id,cat:"school",title:"Prep: "+d.title,text:TXT[d.type]||TXT.other,mins:c.m,rem:c.rem,due:d.date,dd:und?999:dd,
+sc:und?120-c.i*0.01:60+12*Math.max(0,21-dd)+0.5*all/Math.max(1,dd)+(dd<=3?100:0)-c.i*0.01,why:und?TYPES[d.type][0]+": date not set yet, about "+hh(all)+" of prep left. Add the date when you know it.":TYPES[d.type][0]+" in "+dd+" day(s), about "+hh(all)+" of prep left"}))});
+(S.pin[date]||[]).forEach(id=>o.forEach(t=>{if(t.id==id)t.sc+=1000}));
+const sk=S.skip[date]||[];return o.filter(t=>!sk.includes(t.id)).sort((a,b)=>b.sc-a.sc)}
+function suggest(date,cap,alloc){const P=pool(date),res=[];const urgent=P.some(t=>t.cat=="school"&&t.dd<=3);let su=0,c=cap;
+[urgent?c:c*0.7,c].forEach((sc,pass)=>{if(pass==1)su=-1e9;P.forEach(t=>{if(c<=0)return;const r=t.rem-(alloc[t.id]||0);if(r<=0)return;let take=Math.min(r,c);
+if(t.cat=="school"&&pass==0)take=Math.min(take,sc-su);if(take<=0||(take<r&&take<20))return;
+take=Math.round(take);res.push({t,take});c-=take;if(t.cat=="school")su+=take;alloc[t.id]=(alloc[t.id]||0)+take})});return res}
+function info(id){const a=AT.find(t=>t.id==id);if(a)return a;const d=S.dl.find(x=>x.id==id.split("#")[0]);return d?{cat:"school",title:"Prep: "+d.title,text:TXT[d.type]||""}:{cat:"ashoka",title:id,text:""}}
+/* ---- alerts ---- */
+function streak(){let n=0,d=TODAY;const noW=x=>S.h[x]===0&&worked(x)==0||(x<TODAY&&worked(x)==0);
+if(worked(TODAY)>0)return 0;if(!(S.h[TODAY]===0))d=iso(addD(D(TODAY),-1));
+while(d>=S.first&&noW(d)){n++;d=iso(addD(D(d),-1))}return n}
+function alerts(){const a=[],n=streak();
+if(n>3)a.push(["red",`<b>${n} no-work days in a row.</b> You are over the 3-day limit. Pick a 0.5 h day and finish just one block today.`]);
+else if(n==3)a.push(["",`<b>3 no-work days in a row.</b> One more and you cross the limit. Even 25 minutes today resets it.`]);
+S.dl.forEach(d=>{if(d.done||!d.date)return;const dd=diff(d.date,TODAY);if(dd<0||dd>10)return;
+if(d.type=="ashoka")a.push(["",`${d.title}: in ${dd} day(s).`]);
+else if(d.hrs>0){let r=0;for(let i=0;i<Math.ceil(d.hrs*60/45);i++){const m=i<Math.ceil(d.hrs*60/45)-1?45:Math.round(d.hrs*60-45*i);r+=Math.max(0,m-(SP[d.id+"#"+i]||0))}
+if(r>0)a.push([dd<=3?"red":"",`${d.title} in ${dd} day(s): ${hh(r)} of prep left.`])}});
+$("#al").innerHTML=a.map(x=>`<div class="al ${x[0]}">${x[1]}</div>`).join("")}
+/* ---- views ---- */
+const HO=[0,0.5,1,1.5,2,2.5,3];
+function today(){const H=S.h[TODAY],done=Object.entries(S.ld[TODAY]||{}),dm=worked(TODAY);
+let h=`<div class="card ${H===undefined?"ask":""}"><b>${fd(TODAY)}: how many hours can you study today?</b>${H===undefined?'<div class="sub">Choose one to get today’s plan. 0 means the whole day is taken by other work; it counts as a no-work day.</div>':""}<div class="hrs">${HO.map(x=>`<button data-h="${x}" class="${H===x?"on":""}">${x==0?"0 (busy all day)":x+" h"}</button>`).join("")}</div></div>`;
+const P=pool(TODAY);
+if(H===undefined){h+=`<h2>What matters most right now</h2>`+P.slice(0,3).map(t=>`<div class="b"><div class="in"><span class="tag ${t.cat}">${t.cat.toUpperCase()}</span><b>${t.title}</b><div class="tm">${t.why}</div></div></div>`).join("")+(P.length?"":'<div class="sub">Nothing scheduled yet.</div>')}
+else if(H===0&&!dm){h+=`<div class="card">No-work day. Nothing planned, and it counts toward your no-work streak. Missed tasks stay in the queue.</div>`}
+else{const cap=Math.max(0,H*60-dm),sug=suggest(TODAY,cap,{});let t=tm(S.st);
+h+=`<div class="sub">Available ${hh(H*60)} · done ${hh(dm)} · left ${hh(cap)}. Times are suggestions.</div>`;
+const row=(id,mins,dn,why,take,extra)=>{const i=info(id),s=t;t+=mins+5;
+return`<div class="b ${dn?"dn":""}"><input type="checkbox" ${dn?`checked data-un="${id}"`:`data-tick="${id}|${mins}"`}><div class="in"><span class="tag ${i.cat}">${i.cat.toUpperCase()}</span><b>${i.title}</b> <span class="tm">${hm(s)}–${hm(s+mins)} · ${mins} min${extra||""}</span><div class="t">${i.text}</div>${why?`<div class="tm">Why: ${why}</div>`:""}${dn?"":`<button class="x" data-sk="${id}">skip for today</button>`}</div></div>`};
+done.forEach(([id,m])=>h+=row(id,m,1,""));
+sug.forEach(s=>h+=row(s.t.id,s.take,0,s.t.why,0,s.take<s.t.rem?` (first part of ${s.t.rem} min)`:""));
+if(!sug.length&&cap>0)h+=`<div class="card">Nothing left to suggest. Add deadlines in the Deadlines tab or rest.</div>`;
+if(cap<=0&&dm>0)h+=`<div class="card">You have used your hours for today. Nice work.</div>`}
+$("#today").innerHTML=h}
+function soon(){let h=`<p class="sub">Projected plan. Set the hours you expect each day; unset days use your default (${S.defH} h). The plan updates as you finish things.</p>`;const al={};
+for(let i=1;i<=6;i++){const d=iso(addD(D(TODAY),i)),H=S.h[d]===undefined?S.defH:S.h[d];const s=suggest(d,H*60,al);
+h+=`<div class="card"><div class="row"><b style="flex:1">${fd(d)}</b><select data-hd="${d}">${HO.map(x=>`<option value="${x}" ${x===H?"selected":""}>${x} h</option>`).join("")}</select></div>${s.map(x=>`<div class="tm"><span class="tag ${x.t.cat}">${x.t.cat.toUpperCase()}</span>${x.t.title}: ${x.take} min</div>`).join("")||'<div class="tm">Nothing planned.</div>'}</div>`}
+$("#soon").innerHTML=h}
+function dls(){const l=[...S.dl].sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
+$("#dl").innerHTML=`<div class="card"><b>Add a deadline</b><p class="sub">Don’t know the date yet? Leave it empty and set it later on the item. Undated school work sits just below Ashoka. Once you add a date, prep starts ${S.win} days before it and rises in priority as it gets close.</p>
+<div class="row"><select id="dt">${Object.entries(TYPES).map(([k,v])=>`<option value="${k}">${v[0]}</option>`).join("")}</select><input type="text" id="dn" placeholder="e.g. Economics pre-board"></div>
+<div class="row"><span class="tm">Date (optional)</span><input type="date" id="dd"><input type="number" id="dh" step="0.5" min="0" placeholder="prep hours" style="width:120px" value="6"><button id="da">Add</button></div></div>
+<h2>Your dates</h2>${l.map(d=>{const dd=d.date?diff(d.date,TODAY):null;let spent=0;if(d.hrs>0)for(let i=0;i<Math.ceil(d.hrs*60/45);i++)spent+=SP[d.id+"#"+i]||0;const p=d.hrs>0?Math.min(100,Math.round(spent/(d.hrs*60)*100)):0;
+return`<div class="card" style="${dd<0?"opacity:.5":""}"><div class="row"><span class="tag ${d.type=="ashoka"?"ashoka":"school"}">${TYPES[d.type][0].toUpperCase().slice(0,12)}</span><b style="flex:1">${d.title}</b><button class="x" data-rd="${d.id}">remove</button></div><div class="tm">${d.date?fd(d.date)+" · "+(dd<0?"passed":dd==0?"today":dd+" day(s) left"):"Date not set yet. It stays below Ashoka in priority until you add one."}${d.hrs>0?` · prep ${hh(spent)} of ${d.hrs} h`:""}</div>${d.hrs>0?`<div class="bar"><i style="width:${p}%"></i></div>`:""}<div class="row"><span class="tm">Date</span><input type="date" data-ed="${d.id}" value="${d.date||""}">${d.hrs>0?`<span class="tm">Prep hours</span><input type="number" step="0.5" min="0.5" data-eh="${d.id}" value="${d.hrs}" style="width:80px">`:""}</div></div>`}).join("")}
+<h2>Current priority order</h2>${pool(TODAY).slice(0,6).map((t,i)=>`<div class="tm">${i+1}. <span class="tag ${t.cat}">${t.cat.toUpperCase()}</span>${t.title}: ${t.why}</div>`).join("")||'<div class="tm">Nothing pending.</div>'}`}
+function miss(){const m=AT.filter(t=>t.cat=="ashoka"&&t.due<TODAY&&!S.drop[t.id]&&t.mins-(SP[t.id]||0)>0).sort((a,b)=>a.due.localeCompare(b.due));
+$("#mc").textContent=m.length?"("+m.length+")":"";
+$("#miss").innerHTML=`<p class="sub">Overdue Ashoka tasks. They get higher priority every day and are mixed into your daily plan automatically. CLAT is never listed here.</p>`+(m.map(t=>`<div class="b"><div class="in"><span class="tag ashoka">ASHOKA</span><b>${t.title}</b> <span class="tm">${t.mins-(SP[t.id]||0)} min left · Week ${t.w} · ${diff(TODAY,t.due)} day(s) overdue</span><div>${t.text}</div><button class="x" data-pin="${t.id}">do it today</button><button class="x" data-dr="${t.id}">drop</button></div></div>`).join("")||'<div class="card">Nothing overdue.</div>')}
+function set(){$("#set").innerHTML=`<div class="card"><div class="row">Day starts at <input type="time" id="st" value="${S.st}"></div><div class="row">Default hours for future days <select id="dh2">${HO.map(x=>`<option ${x===+S.defH?"selected":""}>${x}</option>`).join("")}</select></div><div class="row">Start school prep this many days before a date <input type="number" id="wn" value="${S.win}" min="3" max="45" style="width:80px"></div></div>
+<div class="card"><b>How it decides</b><p class="sub">1) School items with dates within 3 days come first. 2) Otherwise Ashoka tasks (overdue first). 3) School prep rises above Ashoka as its date gets close. 4) CLAT only fills spare time. School work is only added if you have entered an item (dated items rise with urgency; undated ones sit below Ashoka). A 0-hour day or a day with nothing finished is a no-work day; more than 3 in a row triggers an alert. Progress is saved in this browser.</p></div><div class="row"><button id="rs">Reset everything</button></div>`}
+const tm=s=>{const [a,b]=s.split(":");return +a*60+ +b};
+function render(){calcSP();alerts();today();soon();dls();miss();set();
+document.querySelectorAll("section").forEach(s=>s.classList.toggle("hide",s.id!=tab));document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t==tab))}
+let tab="today";
+document.addEventListener("click",e=>{const t=e.target,d=t.dataset;
+if(d.t){tab=d.t;render()}
+if(d.h!==undefined){S.h[TODAY]=+d.h;save();render()}
+if(d.sk){(S.skip[TODAY]=S.skip[TODAY]||[]).push(d.sk);save();render()}
+if(d.pin){(S.pin[TODAY]=S.pin[TODAY]||[]).push(d.pin);save();tab="today";render()}
+if(d.dr){S.drop[d.dr]=1;save();render()}
+if(d.rd){S.dl=S.dl.filter(x=>x.id!=d.rd);save();render()}
+if(t.id=="da"){const ty=$("#dt").value;S.dl.push({id:"d"+Date.now(),type:ty,title:$("#dn").value||TYPES[ty][0],date:$("#dd").value||"",hrs:ty=="ashoka"?0:+$("#dh").value||0});save();render()}
+if(t.id=="rs"&&confirm("Delete all progress and dates?")){localStorage.removeItem(K);location.reload()}});
+document.addEventListener("change",e=>{const t=e.target,d=t.dataset;
+if(d.tick){const [id,m]=d.tick.split("|");(S.ld[TODAY]=S.ld[TODAY]||{})[id]=(S.ld[TODAY][id]||0)+ +m;save();render()}
+if(d.un){delete S.ld[TODAY][d.un];save();render()}
+if(d.ed){const x=S.dl.find(z=>z.id==d.ed);if(x){x.date=t.value;save();render()}}
+if(d.eh){const x=S.dl.find(z=>z.id==d.eh);if(x&&+t.value>0){x.hrs=+t.value;save();render()}}
+if(d.hd){S.h[d.hd]=+t.value;save();render()}
+if(t.id=="dt")$("#dh").value=TYPES[t.value][1];
+if(t.id=="st"){S.st=t.value||S.st;save();render()}if(t.id=="dh2"){S.defH=+t.value;save();render()}if(t.id=="wn"){S.win=+t.value||14;save();render()}});
+save();render();
+</script></body></html>
